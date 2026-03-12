@@ -823,7 +823,10 @@
           </div>
           <div class="place">📍 ${escapeHtml(item.place)}</div>
           <div class="plan">💕 ${escapeHtml(item.plan)}</div>
-          <div class="mini-route">${item.lat && item.lon ? "지도 연결됨" : "좌표 미확인"}</div>
+          <div class="mini-route">
+            ${item.lat && item.lon ? "지도 연결됨" : "좌표 미확인"}
+            ${getPrevTravelInfo(item)}
+          </div>
           <div class="schedule-bottom">
             <div class="cost">💸 ${formatWon(item.cost)}</div>
             <div class="button-row">
@@ -1070,13 +1073,14 @@
         if(!items.length) return "";
 
         const names = items.map(item => item.place);
-        const eta = estimateTotalMinutes(items);
+        const driveEta = estimateTotalMinutes(items, "car");
+        const walkEta = estimateTotalMinutes(items, "walk");
 
         return `
           <div class="route-day">
             <strong>${day}</strong><br>
             ${names.map(escapeHtml).join(" → ")}<br>
-            <span style="font-size:13px;">예상 이동시간 합계: 약 ${eta}분</span>
+            <span style="font-size:13px;">🚗 자동차 약 ${driveEta}분 · 🚶 도보 약 ${walkEta}분</span>
           </div>
         `;
       }).filter(Boolean).join("");
@@ -1084,7 +1088,7 @@
       wrap.innerHTML = html || "아직 계산된 동선이 없어.";
     }
 
-    function estimateTotalMinutes(items){
+    function estimateTotalMinutes(items, mode = "car"){
       let totalKm = 0;
 
       for(let i = 0; i < items.length - 1; i++){
@@ -1098,7 +1102,12 @@
         }
       }
 
-      return Math.max(0, Math.round((totalKm / 25) * 60));
+      // 평균 속도 기준 대략 계산
+      // car: 시내 평균 25km/h
+      // walk: 도보 평균 4.5km/h
+      const speed = mode === "walk" ? 4.5 : 25;
+
+      return Math.max(0, Math.round((totalKm / speed) * 60));
     }
 
     function distanceKm(lat1, lon1, lat2, lon2){
@@ -1113,9 +1122,33 @@
       return R * c;
     }
 
-    function deg2rad(deg){
-      return deg * (Math.PI / 180);
+    function getPrevTravelInfo(item){
+      const dayItems = state.schedules
+        .filter(x => x.day === item.day)
+        .sort((a, b) => String(a.time || "").localeCompare(String(b.time || "")));
+
+      const index = dayItems.findIndex(x => x.id === item.id);
+      if(index <= 0) return "";
+
+      const prev = dayItems[index - 1];
+
+      if(
+        !isFiniteNumber(prev.lat) || !isFiniteNumber(prev.lon) ||
+        !isFiniteNumber(item.lat) || !isFiniteNumber(item.lon)
+      ){
+        return "<br><span style='font-size:12px;'>이전 장소와 이동시간 계산 불가</span>";
+      }
+
+      const km = distanceKm(prev.lat, prev.lon, item.lat, item.lon);
+      const driveMin = Math.max(1, Math.round((km / 25) * 60));
+      const walkMin = Math.max(1, Math.round((km / 4.5) * 60));
+
+      return `<br><span style="font-size:12px;">이전 장소에서 약 ${km.toFixed(1)}km · 🚗 ${driveMin}분 · 🚶 ${walkMin}분</span>`;
     }
+
+        function deg2rad(deg){
+          return deg * (Math.PI / 180);
+        }
 
     function addPhoto(event){
       const file = event.target.files && event.target.files[0];
