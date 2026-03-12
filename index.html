@@ -248,6 +248,7 @@
       color:var(--primary-dark);
       font-size:13px;
       font-weight:700;
+      line-height:1.5;
     }
 
     .cost{
@@ -481,7 +482,7 @@
   <div class="app">
     <header class="topbar">
       <div class="topbar-title">💗 대전 1주년 여행</div>
-      <div class="topbar-sub">3/25 - 3/28 · 3박 4일 · 장소 검색 + 지도 + AI 동선 추천</div>
+      <div class="topbar-sub">3/25 - 3/28 · 3박 4일 · 장소 검색 + 지도 + 네이버 길찾기 + AI 동선 추천</div>
     </header>
 
     <main class="screen">
@@ -537,7 +538,7 @@
           <label class="label">검색어</label>
           <input id="searchInput" type="text" placeholder="예: 성심당, 한밭수목원, 대전역" />
           <button id="searchBtn" class="btn btn-primary">장소 검색</button>
-          <div class="tiny">검색 결과를 누르면 일정 입력칸에 자동으로 채워져.</div>
+          <div class="tiny">검색어를 입력하면 자동 추천이 떠 💗</div>
 
           <div id="searchResults" class="search-results"></div>
         </div>
@@ -623,10 +624,10 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const STORAGE_KEYS = {
-      schedules: "daejeon_trip_schedules_v4",
-      photos: "daejeon_trip_photos_v4",
-      checklist: "daejeon_trip_checklist_v4",
-      memo: "daejeon_trip_memo_v4"
+      schedules: "daejeon_trip_schedules_v5",
+      photos: "daejeon_trip_photos_v5",
+      checklist: "daejeon_trip_checklist_v5",
+      memo: "daejeon_trip_memo_v5"
     };
 
     const SAMPLE_SCHEDULES = [
@@ -660,7 +661,7 @@
       memo: load(STORAGE_KEYS.memo, ""),
       map: null,
       markers: [],
-      routeText: ""
+      searchTimer: null
     };
 
     init();
@@ -676,6 +677,8 @@
       renderChecklist();
       renderMemo();
       renderSpots();
+      document.getElementById("searchResults").innerHTML =
+        '<div class="empty">검색어를 입력하면 자동 추천이 떠 💗</div>';
       await hydrateMissingCoordinates();
       renderMap();
       renderRouteResult();
@@ -729,11 +732,29 @@
       document.getElementById("fitMapBtn").addEventListener("click", fitMapToMarkers);
       document.getElementById("freeMemo").value = state.memo || "";
 
-      document.getElementById("searchInput").addEventListener("keydown", (e) => {
+      const searchInput = document.getElementById("searchInput");
+
+      searchInput.addEventListener("keydown", (e) => {
         if(e.key === "Enter"){
           e.preventDefault();
           handleSearch();
         }
+      });
+
+      searchInput.addEventListener("input", () => {
+        clearTimeout(state.searchTimer);
+
+        const query = searchInput.value.trim();
+        const wrap = document.getElementById("searchResults");
+
+        if(!query){
+          wrap.innerHTML = '<div class="empty">검색어를 입력하면 자동 추천이 떠 💗</div>';
+          return;
+        }
+
+        state.searchTimer = setTimeout(() => {
+          handleSearch();
+        }, 350);
       });
     }
 
@@ -830,7 +851,7 @@
           <div class="schedule-bottom">
             <div class="cost">💸 ${formatWon(item.cost)}</div>
             <div class="button-row">
-              <button class="btn btn-soft" onclick="openDirections('${escapeJs(item.place)}')">길찾기</button>
+              <button class="btn btn-soft" onclick="openDirections('${escapeJs(item.place)}')">네이버 길찾기</button>
               <button class="btn btn-danger" onclick="deleteSchedule('${item.id}')">삭제</button>
             </div>
           </div>
@@ -909,7 +930,7 @@
             <div class="search-sub">${escapeHtml(item.address)}</div>
             <div class="button-row">
               <button class="btn btn-soft" onclick="useSearchResult('${escapeJs(item.name)}', ${item.lat}, ${item.lon})">일정에 넣기</button>
-              <button class="btn btn-outline" onclick="openMapByCoord(${item.lat}, ${item.lon}, '${escapeJs(item.name)}')">지도 보기</button>
+              <button class="btn btn-outline" onclick="openMapByCoord(${item.lat}, ${item.lon}, '${escapeJs(item.name)}')">네이버지도 보기</button>
             </div>
           </div>
         `).join("");
@@ -919,18 +940,46 @@
     }
 
     async function searchPlaces(query){
-      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&q=${encodeURIComponent(query + " 대전")}`;
-      const res = await fetch(url, {
-        headers: { "Accept-Language": "ko" }
-      });
-      const data = await res.json();
+      const trimmed = query.trim();
+      if (!trimmed) return [];
 
-      return data.map(item => ({
-        name: item.display_name.split(",")[0] || query,
-        address: item.display_name,
-        lat: parseFloat(item.lat),
-        lon: parseFloat(item.lon)
-      }));
+      const candidates = [
+        trimmed,
+        trimmed + " 대전",
+        "대전 " + trimmed
+      ];
+
+      const allResults = [];
+
+      for (const candidate of candidates) {
+        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&q=${encodeURIComponent(candidate)}`;
+        const res = await fetch(url, {
+          headers: { "Accept-Language": "ko,en" }
+        });
+        const data = await res.json();
+
+        for (const item of data) {
+          allResults.push({
+            name: item.display_name.split(",")[0] || trimmed,
+            address: item.display_name,
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon)
+          });
+        }
+      }
+
+      const unique = [];
+      const seen = new Set();
+
+      for (const item of allResults) {
+        const key = `${item.name}|${item.address}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          unique.push(item);
+        }
+      }
+
+      return unique.slice(0, 8);
     }
 
     window.useSearchResult = function(name, lat, lon){
@@ -938,32 +987,45 @@
       document.getElementById("plan").value = name + " 가기";
       document.getElementById("searchInput").value = name;
 
-      const existing = L.marker([lat, lon]).addTo(state.map).bindPopup(`<strong>${escapeHtml(name)}</strong>`);
-      state.markers.push(existing);
+      const marker = L.marker([lat, lon]).addTo(state.map).bindPopup(`<strong>${escapeHtml(name)}</strong>`);
+      state.markers.push(marker);
       state.map.setView([lat, lon], 15);
 
       alert("일정 입력칸에 넣었어 💗");
     };
 
     window.openMapByCoord = function(lat, lon, name){
-      const query = encodeURIComponent(name || "");
+      const q = encodeURIComponent(name || "");
       window.open(`https://map.naver.com/p/search/${q}`);
     };
 
     async function geocode(query){
       try{
-        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query + " 대전")}`;
-        const res = await fetch(url, {
-          headers: { "Accept-Language": "ko" }
-        });
-        const data = await res.json();
+        const trimmed = query.trim();
+        if (!trimmed) return null;
 
-        if(!data.length) return null;
+        const candidates = [
+          trimmed,
+          trimmed + " 대전",
+          "대전 " + trimmed
+        ];
 
-        return {
-          lat: parseFloat(data[0].lat),
-          lon: parseFloat(data[0].lon)
-        };
+        for (const candidate of candidates) {
+          const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(candidate)}`;
+          const res = await fetch(url, {
+            headers: { "Accept-Language": "ko,en" }
+          });
+          const data = await res.json();
+
+          if (data.length) {
+            return {
+              lat: parseFloat(data[0].lat),
+              lon: parseFloat(data[0].lon)
+            };
+          }
+        }
+
+        return null;
       }catch{
         return null;
       }
@@ -991,7 +1053,6 @@
     function optimizeRoutes(){
       const dayOrder = ["Day1","Day2","Day3","Day4"];
       const groups = {};
-
       dayOrder.forEach(day => groups[day] = []);
 
       state.schedules.forEach(item => {
@@ -1012,6 +1073,7 @@
       save(STORAGE_KEYS.schedules, state.schedules);
       renderSchedules();
       renderRouteResult();
+      renderMap();
       alert("동선을 다시 정리했어 ✨");
     }
 
@@ -1102,24 +1164,8 @@
         }
       }
 
-      // 평균 속도 기준 대략 계산
-      // car: 시내 평균 25km/h
-      // walk: 도보 평균 4.5km/h
       const speed = mode === "walk" ? 4.5 : 25;
-
       return Math.max(0, Math.round((totalKm / speed) * 60));
-    }
-
-    function distanceKm(lat1, lon1, lat2, lon2){
-      const R = 6371;
-      const dLat = deg2rad(lat2 - lat1);
-      const dLon = deg2rad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
     }
 
     function getPrevTravelInfo(item){
@@ -1146,9 +1192,21 @@
       return `<br><span style="font-size:12px;">이전 장소에서 약 ${km.toFixed(1)}km · 🚗 ${driveMin}분 · 🚶 ${walkMin}분</span>`;
     }
 
-        function deg2rad(deg){
-          return deg * (Math.PI / 180);
-        }
+    function distanceKm(lat1, lon1, lat2, lon2){
+      const R = 6371;
+      const dLat = deg2rad(lat2 - lat1);
+      const dLon = deg2rad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function deg2rad(deg){
+      return deg * (Math.PI / 180);
+    }
 
     function addPhoto(event){
       const file = event.target.files && event.target.files[0];
