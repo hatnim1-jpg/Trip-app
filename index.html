@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>💗 1주년 대전 여행 플래너</title>
+
+  <meta name="theme-color" content="#ff5baa" />
+
+  <style>
+    :root{
+      --bg1:#ffd9ec;
+      --bg2:#fff8fb;
+      --card:rgba(255,255,255,0.94);
+      --primary:#ff4fa3;
+      --primary2:#ff7dbd;
+      --primary-dark:#e72c87;
+      --text:#2c2430;
+      --sub:#7d7080;
+      --line:#f3d9e8;
+      --soft:#fff0f7;
+      --soft2:#ffe4f1;
+      --shadow:0 16px 36px rgba(255,79,163,.14);
+      --radius-xl:26px;
+      --radius-lg:20px;
+      --radius-md:14px;
+    }
+
+    *{box-sizing:border-box;}
+
+    html,body{
+      margin:0;
+      padding:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",sans-serif;
+      color:var(--text);
+      background:linear-gradient(180deg,var(--bg1) 0%, var(--bg2) 24%, var(--bg2) 100%);
+    }
+
+    body{min-height:100vh;}
+
+    .app{
+      max-width:780px;
+      margin:0 auto;
+      min-height:100vh;
+      padding-bottom:96px;
+    }
+
+    .topbar{
+      padding:24px 18px 20px;
+      color:#fff;
+      background:linear-gradient(135deg,#ff5baa,#ff89c2);
+      border-bottom-left-radius:28px;
+      border-bottom-right-radius:28px;
+      box-shadow:var(--shadow);
+      position:sticky;
+      top:0;
+      z-index:10;
+    }
+
+    .topbar-title{
+      font-size:24px;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+
+    .topbar-sub{
+      margin-top:6px;
+      font-size:14px;
+      opacity:.96;
+    }
+
+    .screen{padding:16px;}
+    .page{display:none;}
+    .page.active{display:block;}
+
+    .card{
+      background:var(--card);
+      border:1px solid rgba(255,255,255,.8);
+      backdrop-filter:blur(10px);
+      border-radius:var(--radius-xl);
+      padding:18px;
+      margin-bottom:16px;
+      box-shadow:var(--shadow);
+    }
+
+    .hero{
+      background:linear-gradient(180deg,#fff7fb 0%, #ffffff 100%);
+    }
+
+    .badge{
+      display:inline-block;
+      background:var(--soft);
+      color:var(--primary-dark);
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .hero-title{
+      margin:14px 0 8px;
+      font-size:28px;
+      line-height:1.18;
+    }
+
+    .hero-sub{
+      margin:0;
+      color:var(--sub);
+      line-height:1.5;
+      font-size:15px;
+    }
+
+    .section-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .section-title{
+      margin:0;
+      font-size:18px;
+      font-weight:800;
+    }
+
+    .label{
+      display:block;
+      font-size:13px;
+      color:var(--sub);
+      margin:12px 0 8px;
+    }
+
+    input,select,textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:var(--radius-md);
+      background:#fff;
+      padding:14px;
+      font-size:16px;
+      outline:none;
+    }
+
+    input:focus,select:focus,textarea:focus{
+      border-color:#ffb8d9;
+      box-shadow:0 0 0 4px rgba(255,79,163,.10);
+    }
+
+    textarea{
+      min-height:100px;
+      resize:vertical;
+    }
+
+    .btn{
+      border:none;
+      cursor:pointer;
+      border-radius:14px;
+      font-size:15px;
+      font-weight:800;
+    }
+
+    .btn-primary{
+      width:100%;
+      margin-top:16px;
+      padding:15px;
+      color:white;
+      background:linear-gradient(135deg,var(--primary),var(--primary2));
+    }
+
+    .btn-soft{
+      background:var(--soft);
+      color:var(--primary-dark);
+      padding:10px 12px;
+    }
+
+    .btn-danger{
+      background:#fff;
+      color:#d54d7e;
+      padding:9px 12px;
+    }
+
+    .schedule-list,.budget-list,.photo-grid,.check-list,.spot-list{
+      display:grid;
+      gap:12px;
+    }
+
+    .empty{
+      background:var(--soft);
+      border-radius:18px;
+      padding:16px;
+      text-align:center;
+      color:var(--sub);
+    }
+
+    .schedule-item{
+      background:var(--soft);
+      border:1px solid #ffd8e8;
+      border-radius:18px;
+      padding:14px;
+    }
+
+    .schedule-top,.schedule-bottom{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+
+    .day-pill{
+      display:inline-block;
+      background:#fff;
+      color:var(--primary-dark);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .time-text{
+      color:var(--sub);
+      font-size:13px;
+    }
+
+    .place{
+      margin-top:10px;
+      font-weight:800;
+      font-size:17px;
+    }
+
+    .plan{
+      margin-top:6px;
+      color:var(--sub);
+      line-height:1.45;
+    }
+
+    .cost{
+      margin-top:12px;
+      color:var(--primary-dark);
+      font-weight:800;
+    }
+
+    .total-card{
+      background:linear-gradient(180deg,#fff7fb,#fff);
+    }
+
+    .total-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      background:var(--soft);
+      border-radius:18px;
+      padding:16px;
+      margin-bottom:14px;
+    }
+
+    .total-value{
+      font-size:24px;
+      font-weight:900;
+      color:var(--primary-dark);
+    }
+
+    .budget-day{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      background:var(--soft);
+      border-radius:16px;
+      padding:14px;
+      font-weight:800;
+    }
+
+    .photo-grid{
+      grid-template-columns:repeat(2,1fr);
+    }
+
+    .photo-item{
+      background:var(--soft);
+      border-radius:18px;
+      overflow:hidden;
+      border:1px solid #ffdbe9;
+      position:relative;
+    }
+
+    .photo-item img{
+      width:100%;
+      aspect-ratio:1/1;
+      object-fit:cover;
+      display:block;
+    }
+
+    .photo-delete{
+      position:absolute;
+      right:8px;
+      top:8px;
+      border:none;
+      background:rgba(255,255,255,.95);
+      color:#d54d7e;
+      border-radius:999px;
+      width:34px;
+      height:34px;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .check-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:var(--soft);
+      border-radius:16px;
+      padding:12px 14px;
+    }
+
+    .check-item input[type="checkbox"]{
+      width:20px;
+      height:20px;
+      margin:0;
+    }
+
+    .check-item.done span{
+      text-decoration:line-through;
+      color:var(--sub);
+    }
+
+    .spot-card{
+      background:var(--soft);
+      border:1px solid #ffdbe9;
+      border-radius:18px;
+      padding:14px;
+    }
+
+    .spot-name{
+      font-weight:800;
+      margin-bottom:6px;
+    }
+
+    .spot-desc{
+      color:var(--sub);
+      font-size:14px;
+      line-height:1.45;
+      margin-bottom:10px;
+    }
+
+    .memo-box{
+      background:var(--soft);
+      border-radius:18px;
+      padding:14px;
+      min-height:72px;
+      color:var(--sub);
+      line-height:1.55;
+      white-space:pre-wrap;
+    }
+
+    .tiny{
+      margin-top:8px;
+      color:var(--sub);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .tabbar{
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:14px;
+      width:min(740px, calc(100% - 20px));
+      background:rgba(255,255,255,.94);
+      backdrop-filter:blur(16px);
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:8px;
+      padding:10px;
+      border-radius:24px;
+      box-shadow:0 12px 32px rgba(53,24,39,.16);
+      z-index:20;
+    }
+
+    .tab-btn{
+      border:none;
+      background:transparent;
+      border-radius:16px;
+      padding:12px 8px;
+      font-size:13px;
+      font-weight:800;
+      color:var(--sub);
+      cursor:pointer;
+    }
+
+    .tab-btn.active{
+      background:var(--soft2);
+      color:var(--primary-dark);
+    }
+
+    @media (max-width:480px){
+      .hero-title{font-size:24px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-title">💗 대전 1주년 여행</div>
+      <div class="topbar-sub">3/25 - 3/28 · 3박 4일 · GitHub Pages용 개인 플래너</div>
+    </header>
+
+    <main class="screen">
+      <section id="page-home" class="page active">
+        <div class="card hero">
+          <div class="badge">Anniversary Trip</div>
+          <h1 class="hero-title">우리만의 대전 여행 앱</h1>
+          <p id="ddayText" class="hero-sub">여행 날짜 계산 중...</p>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">일정 추가</h2>
+
+          <label class="label">Day</label>
+          <select id="day">
+            <option value="Day1">Day1 · 3/25</option>
+            <option value="Day2">Day2 · 3/26</option>
+            <option value="Day3">Day3 · 3/27</option>
+            <option value="Day4">Day4 · 3/28</option>
+          </select>
+
+          <label class="label">시간</label>
+          <input id="time" type="time" />
+
+          <label class="label">장소</label>
+          <input id="place" type="text" placeholder="예: 성심당 본점" />
+
+          <label class="label">일정</label>
+          <input id="plan" type="text" placeholder="예: 튀김소보로 사기" />
+
+          <label class="label">예상 비용</label>
+          <input id="cost" type="number" placeholder="예: 15000" />
+
+          <button id="addScheduleBtn" class="btn btn-primary">일정 추가</button>
+        </div>
+
+        <div class="card">
+          <div class="section-row">
+            <h2 class="section-title">일정 목록</h2>
+            <button id="insertSampleBtn" class="btn btn-soft">샘플 넣기</button>
+          </div>
+          <div id="scheduleList" class="schedule-list"></div>
+        </div>
+      </section>
+
+      <section id="page-budget" class="page">
+        <div class="card total-card">
+          <h2 class="section-title" style="margin-bottom:14px;">예산 정리</h2>
+          <div class="total-row">
+            <span>총 예상 비용</span>
+            <span id="totalCost" class="total-value">0원</span>
+          </div>
+          <div id="budgetList" class="budget-list"></div>
+        </div>
+      </section>
+
+      <section id="page-photo" class="page">
+        <div class="card">
+          <h2 class="section-title">사진 메모</h2>
+          <input id="photoInput" type="file" accept="image/*" />
+          <div class="tiny">참고 사진, 숙소 사진, 맛집 캡처 넣기 좋아.</div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">사진 보관함</h2>
+          <div id="photoGrid" class="photo-grid"></div>
+        </div>
+      </section>
+
+      <section id="page-check" class="page">
+        <div class="card">
+          <div class="section-row">
+            <h2 class="section-title">체크리스트</h2>
+            <button id="resetChecklistBtn" class="btn btn-soft">초기화</button>
+          </div>
+          <div id="checkList" class="check-list"></div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">자유 메모</h2>
+          <textarea id="freeMemo" placeholder="숙소 체크인 시간, 입을 옷, 꼭 찍고 싶은 사진 구도 같은 거 적기"></textarea>
+          <button id="saveMemoBtn" class="btn btn-primary">메모 저장</button>
+          <div class="tiny">자동 저장도 같이 돼.</div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">저장된 메모</h2>
+          <div id="memoView" class="memo-box">아직 저장된 메모가 없어.</div>
+        </div>
+      </section>
+
+      <section id="page-spots" class="page">
+        <div class="card">
+          <h2 class="section-title">대전 추천 스팟</h2>
+          <div id="spotList" class="spot-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabbar">
+      <button class="tab-btn active" data-page="home">일정</button>
+      <button class="tab-btn" data-page="budget">예산</button>
+      <button class="tab-btn" data-page="photo">사진</button>
+      <button class="tab-btn" data-page="check">체크</button>
+      <button class="tab-btn" data-page="spots">추천</button>
+    </nav>
+  </div>
+
+  <script>
+    const STORAGE_KEYS = {
+      schedules: "daejeon_trip_schedules_v3",
+      photos: "daejeon_trip_photos_v3",
+      checklist: "daejeon_trip_checklist_v3",
+      memo: "daejeon_trip_memo_v3"
+    };
+
+    const SAMPLE_SCHEDULES = [
+      { id: uid(), day: "Day1", time: "12:00", place: "대전역", plan: "도착 후 이동하기", cost: 0 },
+      { id: uid(), day: "Day1", time: "13:00", place: "성심당 본점", plan: "튀김소보로, 부추빵 고르기", cost: 22000 },
+      { id: uid(), day: "Day1", time: "15:30", place: "한밭수목원", plan: "산책하면서 사진 찍기", cost: 0 },
+      { id: uid(), day: "Day2", time: "19:00", place: "엑스포과학공원", plan: "야경 데이트", cost: 10000 }
+    ];
+
+    const RECOMMENDED_SPOTS = [
+      { name: "성심당 본점", desc: "튀김소보로, 판타롱부추빵 필수 코스." },
+      { name: "성심당 케익부띠끄", desc: "1주년이면 딸기시루 케이크 보기 좋은 곳." },
+      { name: "한밭수목원", desc: "산책하고 사진 찍기 좋은 데이트 스팟." },
+      { name: "엑스포과학공원", desc: "저녁 산책이나 야경 보기 좋아." },
+      { name: "으능정이거리", desc: "시내 데이트 동선으로 무난하고 편함." }
+    ];
+
+    const DEFAULT_CHECKLIST = [
+      { id: uid(), text: "충전기 챙기기", done: false },
+      { id: uid(), text: "보조배터리 챙기기", done: false },
+      { id: uid(), text: "숙소 예약 확인", done: false },
+      { id: uid(), text: "성심당 갈 시간 체크", done: false },
+      { id: uid(), text: "커플 사진 포즈 저장", done: false },
+      { id: uid(), text: "세면도구 챙기기", done: false }
+    ];
+
+    const state = {
+      schedules: load(STORAGE_KEYS.schedules, []),
+      photos: load(STORAGE_KEYS.photos, []),
+      checklist: load(STORAGE_KEYS.checklist, DEFAULT_CHECKLIST),
+      memo: load(STORAGE_KEYS.memo, "")
+    };
+
+    init();
+
+    function init(){
+      initTabs();
+      initDday();
+      initEvents();
+      renderSchedules();
+      renderBudget();
+      renderPhotos();
+      renderChecklist();
+      renderMemo();
+      renderSpots();
+    }
+
+    function initTabs(){
+      const tabButtons = document.querySelectorAll(".tab-btn");
+      const pages = document.querySelectorAll(".page");
+
+      tabButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          tabButtons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+
+          pages.forEach((page) => page.classList.remove("active"));
+          document.getElementById("page-" + btn.dataset.page).classList.add("active");
+        });
+      });
+    }
+
+    function initDday(){
+      const tripDate = new Date("2026-03-25T00:00:00");
+      const today = new Date();
+      const diff = Math.ceil((tripDate - today) / (1000 * 60 * 60 * 24));
+
+      document.getElementById("ddayText").textContent =
+        diff >= 0
+          ? `✈️ 여행까지 ${diff}일 남았어. 같이 갈 곳 하나씩 적어보자`
+          : `💗 여행 날짜가 지났어도 추억 정리용으로 계속 쓸 수 있어`;
+    }
+
+    function initEvents(){
+      document.getElementById("addScheduleBtn").addEventListener("click", addSchedule);
+      document.getElementById("insertSampleBtn").addEventListener("click", insertSamples);
+      document.getElementById("photoInput").addEventListener("change", addPhoto);
+      document.getElementById("resetChecklistBtn").addEventListener("click", resetChecklist);
+      document.getElementById("saveMemoBtn").addEventListener("click", saveMemo);
+      document.getElementById("freeMemo").value = state.memo || "";
+    }
+
+    function addSchedule(){
+      const day = document.getElementById("day").value;
+      const time = document.getElementById("time").value;
+      const place = document.getElementById("place").value.trim();
+      const plan = document.getElementById("plan").value.trim();
+      const cost = Number(document.getElementById("cost").value || 0);
+
+      if(!place || !plan){
+        alert("장소랑 일정은 꼭 적어줘!");
+        return;
+      }
+
+      state.schedules.push({
+        id: uid(),
+        day,
+        time,
+        place,
+        plan,
+        cost
+      });
+
+      save(STORAGE_KEYS.schedules, state.schedules);
+      clearForm();
+      renderSchedules();
+      renderBudget();
+    }
+
+    function clearForm(){
+      document.getElementById("time").value = "";
+      document.getElementById("place").value = "";
+      document.getElementById("plan").value = "";
+      document.getElementById("cost").value = "";
+    }
+
+    function insertSamples(){
+      state.schedules.push(...SAMPLE_SCHEDULES.map(item => ({ ...item, id: uid() })));
+      save(STORAGE_KEYS.schedules, state.schedules);
+      renderSchedules();
+      renderBudget();
+    }
+
+    function renderSchedules(){
+      const list = document.getElementById("scheduleList");
+
+      if(!state.schedules.length){
+        list.innerHTML = '<div class="empty">아직 일정이 없어. 첫 코스를 넣어보자 💗</div>';
+        return;
+      }
+
+      const dayOrder = ["Day1","Day2","Day3","Day4"];
+      const sorted = [...state.schedules].sort((a,b) => {
+        const dayDiff = dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day);
+        if(dayDiff !== 0) return dayDiff;
+        return String(a.time || "").localeCompare(String(b.time || ""));
+      });
+
+      list.innerHTML = sorted.map(item => `
+        <div class="schedule-item">
+          <div class="schedule-top">
+            <span class="day-pill">${escapeHtml(item.day)}</span>
+            <span class="time-text">${item.time ? escapeHtml(item.time) : "시간 미정"}</span>
+          </div>
+          <div class="place">📍 ${escapeHtml(item.place)}</div>
+          <div class="plan">💕 ${escapeHtml(item.plan)}</div>
+          <div class="schedule-bottom">
+            <div class="cost">💸 ${formatWon(item.cost)}</div>
+            <button class="btn btn-danger" onclick="deleteSchedule('${item.id}')">삭제</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderBudget(){
+      const total = state.schedules.reduce((sum, item) => sum + Number(item.cost || 0), 0);
+      document.getElementById("totalCost").textContent = formatWon(total);
+
+      const grouped = { Day1:0, Day2:0, Day3:0, Day4:0 };
+      state.schedules.forEach(item => {
+        grouped[item.day] += Number(item.cost || 0);
+      });
+
+      document.getElementById("budgetList").innerHTML = Object.entries(grouped).map(([day, amount]) => `
+        <div class="budget-day">
+          <span>${day}</span>
+          <span>${formatWon(amount)}</span>
+        </div>
+      `).join("");
+    }
+
+    function addPhoto(event){
+      const file = event.target.files && event.target.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.photos.push({ id: uid(), src: reader.result });
+        save(STORAGE_KEYS.photos, state.photos);
+        renderPhotos();
+      };
+      reader.readAsDataURL(file);
+      event.target.value = "";
+    }
+
+    function renderPhotos(){
+      const grid = document.getElementById("photoGrid");
+
+      if(!state.photos.length){
+        grid.innerHTML = '<div class="empty">아직 사진이 없어. 참고 사진이나 캡처를 넣어도 돼 📸</div>';
+        return;
+      }
+
+      grid.innerHTML = state.photos.map(photo => `
+        <div class="photo-item">
+          <img src="${photo.src}" alt="여행 사진">
+          <button class="photo-delete" onclick="deletePhoto('${photo.id}')">×</button>
+        </div>
+      `).join("");
+    }
+
+    function renderChecklist(){
+      const wrap = document.getElementById("checkList");
+
+      wrap.innerHTML = state.checklist.map(item => `
+        <label class="check-item ${item.done ? "done" : ""}">
+          <input type="checkbox" ${item.done ? "checked" : ""} onchange="toggleCheck('${item.id}')">
+          <span>${escapeHtml(item.text)}</span>
+        </label>
+      `).join("");
+    }
+
+    function resetChecklist(){
+      state.checklist = DEFAULT_CHECKLIST.map(item => ({
+        ...item,
+        id: uid(),
+        done: false
+      }));
+      save(STORAGE_KEYS.checklist, state.checklist);
+      renderChecklist();
+    }
+
+    function saveMemo(){
+      state.memo = document.getElementById("freeMemo").value;
+      save(STORAGE_KEYS.memo, state.memo);
+      renderMemo();
+    }
+
+    function renderMemo(){
+      document.getElementById("memoView").textContent =
+        state.memo && state.memo.trim()
+          ? state.memo
+          : "아직 저장된 메모가 없어.";
+    }
+
+    function renderSpots(){
+      const list = document.getElementById("spotList");
+      list.innerHTML = RECOMMENDED_SPOTS.map(spot => `
+        <div class="spot-card">
+          <div class="spot-name">📌 ${escapeHtml(spot.name)}</div>
+          <div class="spot-desc">${escapeHtml(spot.desc)}</div>
+          <button class="btn btn-soft" onclick="quickAddSpot('${escapeJs(spot.name)}')">일정에 넣기</button>
+        </div>
+      `).join("");
+    }
+
+    function quickAddSpot(name){
+      state.schedules.push({
+        id: uid(),
+        day: "Day1",
+        time: "",
+        place: name,
+        plan: name + " 가보기",
+        cost: 0
+      });
+      save(STORAGE_KEYS.schedules, state.schedules);
+      renderSchedules();
+      renderBudget();
+      alert("일정에 넣었어 💗");
+    }
+
+    function save(key, value){
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function load(key, fallback){
+      try{
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      }catch{
+        return fallback;
+      }
+    }
+
+    function formatWon(value){
+      return Number(value || 0).toLocaleString("ko-KR") + "원";
+    }
+
+    function uid(){
+      return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+
+    function escapeHtml(value){
+      return String(value)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+
+    function escapeJs(value){
+      return String(value).replaceAll("\\","\\\\").replaceAll("'","\\'");
+    }
+
+    window.deleteSchedule = function(id){
+      state.schedules = state.schedules.filter(item => item.id !== id);
+      save(STORAGE_KEYS.schedules, state.schedules);
+      renderSchedules();
+      renderBudget();
+    };
+
+    window.toggleCheck = function(id){
+      state.checklist = state.checklist.map(item =>
+        item.id === id ? { ...item, done: !item.done } : item
+      );
+      save(STORAGE_KEYS.checklist, state.checklist);
+      renderChecklist();
+    };
+
+    window.deletePhoto = function(id){
+      state.photos = state.photos.filter(photo => photo.id !== id);
+      save(STORAGE_KEYS.photos, state.photos);
+      renderPhotos();
+    };
+  </script>
+</body>
+</html>
