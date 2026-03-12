@@ -944,7 +944,7 @@
 
     window.openMapByCoord = function(lat, lon, name){
       const query = encodeURIComponent(name || "");
-      window.open(`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`);
+      window.open(`https://map.naver.com/p/search/${q}`);
     };
 
     async function geocode(query){
@@ -1226,7 +1226,7 @@
 
     window.openDirections = function(place){
       const q = encodeURIComponent(place);
-      window.open(`https://www.google.com/maps/search/?api=1&query=${q}`);
+      window.open(`https://map.naver.com/p/search/${q}`);
     };
 
     function save(key, value){
